@@ -1,0 +1,21 @@
+{
+  "configurations": [
+    {
+      "name": "STM32",
+      "includePath": [
+        "Core/Inc",
+        "Drivers/CMSIS/Device/ST/STM32WBxx/Include",
+        "Drivers/CMSIS/Include",
+        "Drivers/STM32WBxx_HAL_Driver/Inc",
+        "Drivers/STM32WBxx_HAL_Driver/Inc/Legacy"
+      ],
+      "defines": [
+        "STM32F103xB",
+        "STM32_THREAD_SAFE_STRATEGY=4",
+        "USE_HAL_DRIVER"
+      ],
+      "compilerPath": "/usr/bin/arm-none-eabi-gcc"
+    }
+  ],
+  "version": 4
+}

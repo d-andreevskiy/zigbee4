@@ -1,0 +1,12 @@
+{
+    "tasks": [
+        {
+            "type": "cmake",
+            "label": "CMake: настроить",
+            "command": "configure",
+            "preset": "${command:cmake.activeConfigurePresetName}",
+            "problemMatcher": [],
+            "detail": "Задача шаблона CMake настроить"
+        }
+    ]
+}

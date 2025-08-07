@@ -1,0 +1,38 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "openocd",
+			"type": "cortex-debug",
+			"request": "launch",
+			"cwd": "${workspaceRoot}",
+			"servertype": "openocd",
+			"executable": "./build/Debug/Zigbee4.elf",
+			"svdFile": "STM32WB55_CM4.svd",
+			"device": "STM32F103WB55",
+
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32wbx.cfg"
+            ],
+            "interface": "swd",
+			"runToEntryPoint": "main",
+            "swoConfig":{
+                "enabled":true,
+                "source":"probe",
+                "swoFrequency": 2000000,
+                "cpuFrequency": 8000000,
+                "decoders": [
+                    {
+                        "port": 0,
+                        "type": "console",
+						"showOnStartup": true,
+                        "label": "SWO output",
+                        "encoding":"ascii"
+                    }
+                ]
+            },
+			"preLaunchTask": "CMake: сборка"
+		}
+	]
+}
