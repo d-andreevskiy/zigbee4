@@ -60,6 +60,11 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define TEMP_MIN_2 -4000
+#define TEMP_MAX_2 14500
+#define TEMP_TOLERANCE_2 10
+#define LED_Pin GPIO_PIN_4
+#define LED_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 

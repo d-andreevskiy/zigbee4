@@ -35,6 +35,8 @@
 
 /* Private includes -----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "bmp280.h"
+
 
 /* USER CODE END Includes */
 
@@ -595,7 +597,6 @@ void TL_TRACES_EvtReceived(TL_EvtPacket_t * hcievt)
 void DbgOutputInit(void)
 {
 #ifdef CFG_DEBUG_TRACE_UART
-  MX_USART1_UART_Init();
   return;
 #endif /* CFG_DEBUG_TRACE_UART */
 }
@@ -615,5 +616,13 @@ void DbgOutputTraces(uint8_t *p_data, uint16_t size, void (*cb)(void))
 }
 #endif /* CFG_DEBUG_TRACE != 0 */
 /* USER CODE BEGIN FD_WRAP_FUNCTIONS */
+
+void TimerCallBack() {
+  UTIL_SEQ_SetTask(1<<CFG_TASK_TEMP,  CFG_SCH_PRIO_USER  );
+
+
+
+}
+
 
 /* USER CODE END FD_WRAP_FUNCTIONS */

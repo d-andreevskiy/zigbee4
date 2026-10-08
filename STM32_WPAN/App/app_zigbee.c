@@ -36,10 +36,13 @@
 #include <assert.h>
 #include "zcl/zcl.h"
 #include "zcl/general/zcl.basic.h"
-#include "zcl/general/zcl.onoff.h"
-#include "zcl/general/zcl.level.h"
+#include "zcl/general/zcl.wcm.h"
+#include "zcl/general/zcl.temp.meas.h"
 
 /* USER CODE BEGIN Includes */
+#include "main.h"
+#include "bmp280.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,6 +56,14 @@ static void APP_ZIGBEE_ConfigGroupAddr(void);
 #define CHANNEL                                     13
 
 #define SW1_ENDPOINT                                10
+#define SW2_ENDPOINT                                11
+#define SW3_ENDPOINT                                3
+
+/* Water_content (endpoint 1) specific defines ------------------------------------------------*/
+#define HUMIDITY_MIN_1                      1
+#define HUMIDITY_MAX_1                      10000
+/* USER CODE BEGIN Water_content (endpoint 1) defines */
+/* USER CODE END Water_content (endpoint 1) defines */
 
 /* USER CODE BEGIN PD */
 #define SW1_GROUP_ADDR          0x0001
@@ -85,6 +96,8 @@ static void APP_ZIGBEE_ProcessNotifyM0ToM4(void);
 static void APP_ZIGBEE_ProcessRequestM0ToM4(void);
 
 /* USER CODE BEGIN PFP */
+static void APP_ZIGBEE_ProcessTemp(void);
+
 /* USER CODE END PFP */
 
 /* Private variables ---------------------------------------------------------*/
@@ -110,103 +123,20 @@ struct zigbee_app_info
   bool init_after_join;
 
   struct ZbZclClusterT *basic_client_1;
-  struct ZbZclClusterT *onOff_client_1;
-  struct ZbZclClusterT *onOff_server_1;
-  struct ZbZclClusterT *levelControl_server_1;
+  struct ZbZclClusterT *water_content_client_1;
+  struct ZbZclClusterT *water_content_server_1;
+  struct ZbZclClusterT *basic_client_2;
+  struct ZbZclClusterT *temperature_meas_client_2;
+  struct ZbZclClusterT *temperature_meas_server_2;
 };
 static struct zigbee_app_info zigbee_app_info;
 
-/* OnOff server 1 custom callbacks */
-static enum ZclStatusCodeT onOff_server_1_off(struct ZbZclClusterT *cluster, struct ZbZclAddrInfoT *srcInfo, void *arg);
-static enum ZclStatusCodeT onOff_server_1_on(struct ZbZclClusterT *cluster, struct ZbZclAddrInfoT *srcInfo, void *arg);
-static enum ZclStatusCodeT onOff_server_1_toggle(struct ZbZclClusterT *cluster, struct ZbZclAddrInfoT *srcInfo, void *arg);
-
-static struct ZbZclOnOffServerCallbacksT OnOffServerCallbacks_1 =
-{
-  .off = onOff_server_1_off,
-  .on = onOff_server_1_on,
-  .toggle = onOff_server_1_toggle,
-};
-
-/* LevelControl server 1 custom callbacks */
-static enum ZclStatusCodeT levelControl_server_1_move_to_level(struct ZbZclClusterT *cluster, struct ZbZclLevelClientMoveToLevelReqT *req, struct ZbZclAddrInfoT *srcInfo, void *arg);
-static enum ZclStatusCodeT levelControl_server_1_move(struct ZbZclClusterT *cluster, struct ZbZclLevelClientMoveReqT *req, struct ZbZclAddrInfoT *srcInfo, void *arg);
-static enum ZclStatusCodeT levelControl_server_1_step(struct ZbZclClusterT *cluster, struct ZbZclLevelClientStepReqT *req, struct ZbZclAddrInfoT *srcInfo, void *arg);
-static enum ZclStatusCodeT levelControl_server_1_stop(struct ZbZclClusterT *cluster, struct ZbZclLevelClientStopReqT *req, struct ZbZclAddrInfoT *srcInfo, void *arg);
-
-static struct ZbZclLevelServerCallbacksT LevelServerCallbacks_1 =
-{
-  .move_to_level = levelControl_server_1_move_to_level,
-  .move = levelControl_server_1_move,
-  .step = levelControl_server_1_step,
-  .stop = levelControl_server_1_stop,
-};
-
 /* USER CODE BEGIN PV */
+BMP280_HandleTypedef bmp280;
+extern I2C_HandleTypeDef hi2c1;
+
 /* USER CODE END PV */
 /* Functions Definition ------------------------------------------------------*/
-
-/* OnOff server off 1 command callback */
-static enum ZclStatusCodeT onOff_server_1_off(struct ZbZclClusterT *cluster, struct ZbZclAddrInfoT *srcInfo, void *arg)
-{
-  /* USER CODE BEGIN 0 OnOff server 1 off 1 */
-  APP_DBG("off");
-
-  return ZCL_STATUS_SUCCESS;
-  /* USER CODE END 0 OnOff server 1 off 1 */
-}
-
-/* OnOff server on 1 command callback */
-static enum ZclStatusCodeT onOff_server_1_on(struct ZbZclClusterT *cluster, struct ZbZclAddrInfoT *srcInfo, void *arg)
-{
-  /* USER CODE BEGIN 1 OnOff server 1 on 1 */
-  APP_DBG("on");
-
-  return ZCL_STATUS_SUCCESS;
-  /* USER CODE END 1 OnOff server 1 on 1 */
-}
-
-/* OnOff server toggle 1 command callback */
-static enum ZclStatusCodeT onOff_server_1_toggle(struct ZbZclClusterT *cluster, struct ZbZclAddrInfoT *srcInfo, void *arg)
-{
-  /* USER CODE BEGIN 2 OnOff server 1 toggle 1 */
-  APP_DBG("toggle");
-
-  return ZCL_STATUS_SUCCESS;
-  /* USER CODE END 2 OnOff server 1 toggle 1 */
-}
-
-/* LevelControl server move_to_level 1 command callback */
-static enum ZclStatusCodeT levelControl_server_1_move_to_level(struct ZbZclClusterT *cluster, struct ZbZclLevelClientMoveToLevelReqT *req, struct ZbZclAddrInfoT *srcInfo, void *arg)
-{
-  /* USER CODE BEGIN 3 LevelControl server 1 move_to_level 1 */
-  return ZCL_STATUS_SUCCESS;
-  /* USER CODE END 3 LevelControl server 1 move_to_level 1 */
-}
-
-/* LevelControl server move 1 command callback */
-static enum ZclStatusCodeT levelControl_server_1_move(struct ZbZclClusterT *cluster, struct ZbZclLevelClientMoveReqT *req, struct ZbZclAddrInfoT *srcInfo, void *arg)
-{
-  /* USER CODE BEGIN 4 LevelControl server 1 move 1 */
-  return ZCL_STATUS_SUCCESS;
-  /* USER CODE END 4 LevelControl server 1 move 1 */
-}
-
-/* LevelControl server step 1 command callback */
-static enum ZclStatusCodeT levelControl_server_1_step(struct ZbZclClusterT *cluster, struct ZbZclLevelClientStepReqT *req, struct ZbZclAddrInfoT *srcInfo, void *arg)
-{
-  /* USER CODE BEGIN 5 LevelControl server 1 step 1 */
-  return ZCL_STATUS_SUCCESS;
-  /* USER CODE END 5 LevelControl server 1 step 1 */
-}
-
-/* LevelControl server stop 1 command callback */
-static enum ZclStatusCodeT levelControl_server_1_stop(struct ZbZclClusterT *cluster, struct ZbZclLevelClientStopReqT *req, struct ZbZclAddrInfoT *srcInfo, void *arg)
-{
-  /* USER CODE BEGIN 6 LevelControl server 1 stop 1 */
-  return ZCL_STATUS_SUCCESS;
-  /* USER CODE END 6 LevelControl server 1 stop 1 */
-}
 
 /**
  * @brief  Zigbee application initialization
@@ -237,6 +167,17 @@ void APP_ZIGBEE_Init(void)
   UTIL_SEQ_RegTask(1U << CFG_TASK_ZIGBEE_NETWORK_FORM, UTIL_SEQ_RFU, APP_ZIGBEE_NwkForm);
 
   /* USER CODE BEGIN APP_ZIGBEE_INIT */
+	bmp280_init_default_params(&bmp280.params);
+	bmp280.addr = BMP280_I2C_ADDRESS_0;
+	bmp280.i2c = &hi2c1;
+
+  while (!bmp280_init(&bmp280, &bmp280.params)) {
+		HAL_Delay(2000);
+	}
+
+  UTIL_SEQ_RegTask(1U << CFG_TASK_TEMP, UTIL_SEQ_RFU, APP_ZIGBEE_ProcessTemp);
+
+
   /* USER CODE END APP_ZIGBEE_INIT */
 
   /* Start the Zigbee on the CPU2 side */
@@ -293,7 +234,7 @@ static void APP_ZIGBEE_ConfigEndpoints(void)
 
   /* Endpoint: SW1_ENDPOINT */
   req.profileId = ZCL_PROFILE_HOME_AUTOMATION;
-  req.deviceId = ZCL_DEVICE_ONOFF_SWITCH;
+  req.deviceId = ZCL_DEVICE_METER_INTERFACE;
   req.endpoint = SW1_ENDPOINT;
   ZbZclAddEndpoint(zigbee_app_info.zb, &req, &conf);
   assert(conf.status == ZB_STATUS_SUCCESS);
@@ -302,17 +243,37 @@ static void APP_ZIGBEE_ConfigEndpoints(void)
   zigbee_app_info.basic_client_1 = ZbZclBasicClientAlloc(zigbee_app_info.zb, SW1_ENDPOINT);
   assert(zigbee_app_info.basic_client_1 != NULL);
   ZbZclClusterEndpointRegister(zigbee_app_info.basic_client_1);
-  /* OnOff client/server */
-  zigbee_app_info.onOff_client_1 = ZbZclOnOffClientAlloc(zigbee_app_info.zb, SW1_ENDPOINT);
-  assert(zigbee_app_info.onOff_client_1 != NULL);
-  ZbZclClusterEndpointRegister(zigbee_app_info.onOff_client_1);
-  zigbee_app_info.onOff_server_1 = ZbZclOnOffServerAlloc(zigbee_app_info.zb, SW1_ENDPOINT, &OnOffServerCallbacks_1, NULL);
-  assert(zigbee_app_info.onOff_server_1 != NULL);
-  ZbZclClusterEndpointRegister(zigbee_app_info.onOff_server_1);
-  /* LevelControl server */
-  zigbee_app_info.levelControl_server_1 = ZbZclLevelServerAlloc(zigbee_app_info.zb, SW1_ENDPOINT, zigbee_app_info.onOff_server_1, &LevelServerCallbacks_1, NULL);
-  assert(zigbee_app_info.levelControl_server_1 != NULL);
-  ZbZclClusterEndpointRegister(zigbee_app_info.levelControl_server_1);
+  /* Water content client/server */
+  zigbee_app_info.water_content_client_1 = ZbZclWaterContentMeasClientAlloc(zigbee_app_info.zb, SW1_ENDPOINT, ZCL_CLUSTER_MEAS_HUMIDITY);
+  assert(zigbee_app_info.water_content_client_1 != NULL);
+  ZbZclClusterEndpointRegister(zigbee_app_info.water_content_client_1);
+  zigbee_app_info.water_content_server_1 = ZbZclWaterContentMeasServerAlloc(zigbee_app_info.zb, SW1_ENDPOINT, ZCL_CLUSTER_MEAS_HUMIDITY, HUMIDITY_MIN_1, HUMIDITY_MAX_1);
+  assert(zigbee_app_info.water_content_server_1 != NULL);
+  ZbZclClusterEndpointRegister(zigbee_app_info.water_content_server_1);
+  /* Endpoint: SW2_ENDPOINT */
+  req.profileId = ZCL_PROFILE_HOME_AUTOMATION;
+  req.deviceId = ZCL_DEVICE_METER_INTERFACE;
+  req.endpoint = SW2_ENDPOINT;
+  ZbZclAddEndpoint(zigbee_app_info.zb, &req, &conf);
+  assert(conf.status == ZB_STATUS_SUCCESS);
+
+  /* Basic client/server */
+  zigbee_app_info.basic_client_2 = ZbZclBasicClientAlloc(zigbee_app_info.zb, SW2_ENDPOINT);
+  assert(zigbee_app_info.basic_client_2 != NULL);
+  ZbZclClusterEndpointRegister(zigbee_app_info.basic_client_2);
+  /* Temperature meas client/server */
+  zigbee_app_info.temperature_meas_client_2 = ZbZclTempMeasClientAlloc(zigbee_app_info.zb, SW2_ENDPOINT);
+  assert(zigbee_app_info.temperature_meas_client_2 != NULL);
+  ZbZclClusterEndpointRegister(zigbee_app_info.temperature_meas_client_2);
+  zigbee_app_info.temperature_meas_server_2 = ZbZclTempMeasServerAlloc(zigbee_app_info.zb, SW2_ENDPOINT, TEMP_MIN_2, TEMP_MAX_2, TEMP_TOLERANCE_2);
+  assert(zigbee_app_info.temperature_meas_server_2 != NULL);
+  ZbZclClusterEndpointRegister(zigbee_app_info.temperature_meas_server_2);
+  /* Endpoint: SW3_ENDPOINT */
+  req.profileId = ZCL_PROFILE_HOME_AUTOMATION;
+  req.deviceId = ZCL_DEVICE_ONOFF_SWITCH;
+  req.endpoint = SW3_ENDPOINT;
+  ZbZclAddEndpoint(zigbee_app_info.zb, &req, &conf);
+  assert(conf.status == ZB_STATUS_SUCCESS);
 
   /* USER CODE BEGIN CONFIG_ENDPOINT */
   /* USER CODE END CONFIG_ENDPOINT */
@@ -358,17 +319,17 @@ static void APP_ZIGBEE_NwkForm(void)
       zigbee_app_info.join_delay = 0U;
       zigbee_app_info.init_after_join = true;
       APP_DBG("Startup done !\n");
-      /* USER CODE BEGIN 7 */
+      /* USER CODE BEGIN 0 */
 
-      /* USER CODE END 7 */
+      /* USER CODE END 0 */
     }
     else
     {
       APP_DBG("Startup failed, attempting again after a short delay (%d ms)", APP_ZIGBEE_STARTUP_FAIL_DELAY);
       zigbee_app_info.join_delay = HAL_GetTick() + APP_ZIGBEE_STARTUP_FAIL_DELAY;
-      /* USER CODE BEGIN 8 */
+      /* USER CODE BEGIN 1 */
 
-      /* USER CODE END 8 */
+      /* USER CODE END 1 */
     }
   }
 
@@ -385,6 +346,8 @@ static void APP_ZIGBEE_NwkForm(void)
 
     /* Assign ourselves to the group addresses */
     APP_ZIGBEE_ConfigGroupAddr();
+
+    // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET );
 
     /* Since we're using group addressing (broadcast), shorten the broadcast timeout */
     uint32_t bcast_timeout = 3;
@@ -544,9 +507,11 @@ static void APP_ZIGBEE_CheckWirelessFirmwareInfo(void)
     /* print clusters allocated */
     APP_DBG("Clusters allocated are:");
     APP_DBG("basic Client on Endpoint %d", SW1_ENDPOINT);
-    APP_DBG("onOff Client on Endpoint %d", SW1_ENDPOINT);
-    APP_DBG("onOff Server on Endpoint %d", SW1_ENDPOINT);
-    APP_DBG("levelControl Server on Endpoint %d", SW1_ENDPOINT);
+    APP_DBG("water_content Client on Endpoint %d", SW1_ENDPOINT);
+    APP_DBG("water_content Server on Endpoint %d", SW1_ENDPOINT);
+    APP_DBG("basic Client on Endpoint %d", SW2_ENDPOINT);
+    APP_DBG("temperature_meas Client on Endpoint %d", SW2_ENDPOINT);
+    APP_DBG("temperature_meas Server on Endpoint %d", SW2_ENDPOINT);
     APP_DBG("**********************************************************");
   }
 }
@@ -765,5 +730,73 @@ static void APP_ZIGBEE_ConfigGroupAddr(void)
   ZbApsmeAddGroupReq(zigbee_app_info.zb, &req, &conf);
 
 } /* APP_ZIGBEE_ConfigGroupAddr */
+
+extern LCD_HandleTypeDef hlcd;
+
+
+static void APP_ZIGBEE_ProcessTemp(void) {
+
+  float pressure, temperature, humidity;
+
+  bmp280_read_float(&bmp280, &temperature, &pressure, &humidity);
+
+  HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+
+  enum ZclStatusCodeT status;
+  int temp_val = temperature;
+  float temp = temp_val*100;
+  int16_t temp_val_attr;
+  /* Write attribute */
+  temp_val_attr = (int16_t) temp ;
+  status = ZbZclAttrIntegerWrite(zigbee_app_info.temperature_meas_server_2, ZCL_TEMP_MEAS_ATTR_MEAS_VAL, (int16_t)temp_val_attr);
+
+  static const uint32_t num[4][10][4] = {
+    {
+      { 0x2, 0x3, 0x2, 0x3}, // XXX0
+      { 0x0, 0x2, 0x2, 0x0}, // XXX1
+      { 0x2, 0x1, 0x3, 0x2}, // XXX2
+      { 0x2, 0x2, 0x3, 0x2}, // XXX3
+      { 0x0, 0x2, 0x3, 0x1}, // XXX4
+      { 0x2, 0x2, 0x1, 0x3}, // XXX5
+      { 0x2, 0x3, 0x1, 0x3}, // XXX6
+      { 0x0, 0x2, 0x2, 0x2}, // XXX7
+      { 0x2, 0x3, 0x3, 0x3}, // XXX8
+      { 0x2, 0x2, 0x3, 0x3}  // XXX9
+    },
+    {
+      { 0x4, 0xC, 0x4, 0xC}, // XXX0
+      { 0x0, 0x4, 0x4, 0x0}, // XXX1
+      { 0x4, 0x8, 0xc, 0x4}, // XXX2
+      { 0x4, 0x4, 0xc, 0x4}, // XXX3
+      { 0x0, 0x4, 0xc, 0x8}, // XXX4
+      { 0x4, 0x4, 0x8, 0xc}, // XXX5
+      { 0x4, 0xC, 0x8, 0xc}, // XXX6
+      { 0x0, 0x4, 0x4, 0x4}, // XXX7
+      { 0x4, 0xC, 0xC, 0xC}, // XXX8
+      { 0x4, 0x4, 0xC, 0xC}  // XXX9
+    },
+    
+  };
+
+  static int N ;
+  if (N > 9)
+    N = 0;
+
+ // HAL_LCD_Clear(&hlcd);
+
+  int num1 = temp_val % 10;
+  int num2 = temp_val / 10;
+
+  HAL_LCD_Write(&hlcd, LCD_RAM_REGISTER0, 0, num[0][num1][0] | num[1][num2][0] );
+  HAL_LCD_Write(&hlcd, LCD_RAM_REGISTER2, 0, num[0][num1][1] | num[1][num2][1] );
+  HAL_LCD_Write(&hlcd, LCD_RAM_REGISTER4, 0, num[0][num1][2] | num[1][num2][2] );
+  HAL_LCD_Write(&hlcd, LCD_RAM_REGISTER6, 0, num[0][num1][3] | num[1][num2][3] );
+  
+  HAL_LCD_UpdateDisplayRequest(&hlcd);
+
+  N ++;
+
+}
+
 
 /* USER CODE END FD_LOCAL_FUNCTIONS */

@@ -7,6 +7,18 @@
             "preset": "${command:cmake.activeConfigurePresetName}",
             "problemMatcher": [],
             "detail": "Задача шаблона CMake настроить"
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: настроить",
+            "command": "configure",
+            "preset": "Debug",
+            "problemMatcher": [],
+            "detail": "Задача шаблона CMake настроить",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }

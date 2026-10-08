@@ -65,7 +65,7 @@
 /**
  * Select UART interfaces
  */
-#define CFG_DEBUG_TRACE_UART    hw_uart1
+#define CFG_DEBUG_TRACE_UART    0
 #define CFG_CONSOLE_MENU
 #define CFG_CLI_UART            hw_lpuart1
 /******************************************************************************
@@ -228,7 +228,7 @@ typedef enum
  * Note : Refer to utilities_conf.h file in order to details
  *        the level of traces : CFG_DEBUG_TRACE_FULL or CFG_DEBUG_TRACE_LIGHT
  *****************************************************************************/
-#define CFG_DEBUG_TRACE    1
+#define CFG_DEBUG_TRACE    0
 
 #if (CFG_FULL_LOW_POWER == 1)
 #undef CFG_DEBUG_TRACE
@@ -242,8 +242,8 @@ typedef enum
  * When both are set to 0, no trace are output
  * When both are set to 1,  CFG_DEBUG_TRACE_FULL is selected
  */
-#define CFG_DEBUG_TRACE_LIGHT     1
-#define CFG_DEBUG_TRACE_FULL      1
+#define CFG_DEBUG_TRACE_LIGHT     0
+#define CFG_DEBUG_TRACE_FULL      0
 
 #if (( CFG_DEBUG_TRACE != 0 ) && ( CFG_DEBUG_TRACE_LIGHT == 0 ) && (CFG_DEBUG_TRACE_FULL == 0))
 #undef CFG_DEBUG_TRACE_FULL
@@ -299,7 +299,7 @@ typedef enum
   CFG_TASK_VCP_SEND_DATA,
 #endif /* (CFG_USB_INTERFACE_ENABLE != 0) */
   /* USER CODE BEGIN CFG_IdleTask_Id_t */
-
+  CFG_TASK_TEMP,
   /* USER CODE END CFG_IdleTask_Id_t */
   CFG_TASK_NBR  /**< Shall be last in the list */
 } CFG_IdleTask_Id_t;
@@ -321,7 +321,7 @@ typedef enum
   CFG_SCH_PRIO_0,
   CFG_SCH_PRIO_1,
   /* USER CODE BEGIN CFG_SCH_Prio_Id_t */
-
+  CFG_SCH_PRIO_USER,
   /* USER CODE END CFG_SCH_Prio_Id_t */
   CFG_SCH_PRIO_NBR  /**< Shall be last in the list */
 } CFG_SCH_Prio_Id_t;

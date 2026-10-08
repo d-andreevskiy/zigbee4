@@ -9,7 +9,8 @@
 			"servertype": "openocd",
 			"executable": "./build/Debug/Zigbee4.elf",
 			"svdFile": "STM32WB55_CM4.svd",
-			"device": "STM32F103WB55",
+			"device": "STM32WB55",
+            "showDevDebugOutput":"raw",
 
             "configFiles": [
                 "interface/stlink.cfg",

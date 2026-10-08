@@ -44,6 +44,8 @@
         "memory": "c",
         "new": "c",
         "stdint-uintn.h": "c",
-        "*.tcc": "c"
+        "*.tcc": "c",
+        "*.bak": "c",
+        "bmp280.h": "c"
     }
 }
